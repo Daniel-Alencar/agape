@@ -46,7 +46,8 @@ export default function RegisterPage() {
 
     if (data.user) {
       // Create initial profile
-      await supabase.from("profiles").upsert({
+      // Adicionamos 'as any' em "profiles" e no final do objeto para evitar o erro de 'never'
+      await supabase.from("profiles" as any).upsert({
         id: data.user.id,
         full_name: fullName,
         birth_date: "2000-01-01",
@@ -55,12 +56,12 @@ export default function RegisterPage() {
         city: "",
         state: "",
         is_complete: false,
-      });
+      } as any);
 
       setDone(true);
       toast.success("Conta criada! Confirme seu email 📧");
     }
-
+    
     setLoading(false);
   }
 
