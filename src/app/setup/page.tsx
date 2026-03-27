@@ -39,8 +39,10 @@ export default function SetupPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) { router.push("/auth/login"); return; }
-      supabase.from("profiles").select("*").eq("id", data.user.id).single()
-        .then(({ data: profile }) => {
+      
+      // Correção 1: "profiles" as any
+      supabase.from("profiles" as any).select("*").eq("id", data.user.id).single()
+        .then(({ data: profile }: { data: any }) => {
           if (profile) {
             setForm((prev) => ({
               ...prev,
@@ -90,9 +92,10 @@ export default function SetupPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    const { error } = await supabase.from("profiles").upsert({
+    // Correção 2: "profiles" as any e objeto de inserção as any
+    const { error } = await supabase.from("profiles" as any).upsert({
       id: user.id, ...form, is_complete: true, updated_at: new Date().toISOString(),
-    });
+    } as any);
 
     if (error) { toast.error("Erro ao salvar: " + error.message); setLoading(false); return; }
     toast.success("Perfil criado! Que Deus abençoe sua jornada 🙏");

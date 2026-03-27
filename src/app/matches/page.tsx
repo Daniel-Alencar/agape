@@ -36,8 +36,9 @@ export default function MatchesPage() {
   async function loadMatches(userId: string) {
     const supabase = createClient();
 
+    // Adicionado 'as any' para evitar erro de 'never'
     const { data: rawMatches } = await supabase
-      .from("matches")
+      .from("matches" as any)
       .select("*")
       .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
       .order("created_at", { ascending: false });
@@ -48,14 +49,16 @@ export default function MatchesPage() {
       rawMatches.map(async (m: Match) => {
         const otherId = m.user1_id === userId ? m.user2_id : m.user1_id;
 
+        // Adicionado 'as any' na tabela
         const { data: otherProfile } = await supabase
-          .from("profiles")
+          .from("profiles" as any)
           .select("*")
           .eq("id", otherId)
           .single();
 
+        // Adicionado 'as any' na tabela
         const { data: lastMsg } = await supabase
-          .from("messages")
+          .from("messages" as any)
           .select("*")
           .eq("match_id", m.id)
           .order("created_at", { ascending: false })
@@ -64,8 +67,9 @@ export default function MatchesPage() {
 
         return {
           ...m,
-          other_profile: otherProfile as Profile,
-          last_message: lastMsg as Message | undefined,
+          // Correção: Usando 'unknown' como ponte para converter valores que podem ser nulos
+          other_profile: otherProfile as unknown as Profile,
+          last_message: lastMsg as unknown as Message | undefined,
         };
       })
     );
@@ -76,11 +80,14 @@ export default function MatchesPage() {
   async function openChat(match: MatchWithProfile) {
     setActiveMatch(match);
     const supabase = createClient();
+    
+    // Adicionado 'as any' na tabela
     const { data } = await supabase
-      .from("messages")
+      .from("messages" as any)
       .select("*")
       .eq("match_id", match.id)
       .order("created_at", { ascending: true });
+      
     setMessages((data as Message[]) ?? []);
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   }
@@ -90,21 +97,22 @@ export default function MatchesPage() {
     setSending(true);
     const supabase = createClient();
 
+    // Adicionado 'as any' na tabela e no objeto de inserção
     const { data, error } = await supabase
-      .from("messages")
+      .from("messages" as any)
       .insert({
         match_id: activeMatch.id,
         sender_id: myId,
         content: input.trim(),
         read: false,
-      })
+      } as any)
       .select()
       .single();
 
     if (error) {
       toast.error("Erro ao enviar mensagem");
     } else {
-      setMessages((prev) => [...prev, data as Message]);
+      setMessages((prev) => [...prev, data as unknown as Message]);
       setInput("");
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
     }

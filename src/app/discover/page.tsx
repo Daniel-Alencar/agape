@@ -23,10 +23,13 @@ export default function DiscoverPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
+      // 1. Correção: "profiles" as any
       const { data: profile } = await supabase
-        .from("profiles").select("*").eq("id", user.id).single();
+        .from("profiles" as any).select("*").eq("id", user.id).single();
 
-      if (!profile || !profile.is_complete) { router.push("/setup"); return; }
+      // 2. Correção: (profile as Profile).is_complete
+      if (!profile || !(profile as Profile).is_complete) { router.push("/setup"); return; }
+      
       setMyProfile(profile as Profile);
       await loadCandidates(user.id, profile as Profile);
       setLoading(false);
@@ -36,12 +39,16 @@ export default function DiscoverPage() {
 
   async function loadCandidates(userId: string, profile: Profile) {
     const supabase = createClient();
+    
+    // 3. Correção: "swipes" as any
     const { data: swiped } = await supabase
-      .from("swipes").select("swiped_id").eq("swiper_id", userId);
+      .from("swipes" as any).select("swiped_id").eq("swiper_id", userId);
+      
     const swipedIds = swiped?.map((s: { swiped_id: string }) => s.swiped_id) ?? [];
 
+    // 4. Correção: "profiles" as any
     let query = supabase
-      .from("profiles")
+      .from("profiles" as any)
       .select("*")
       .neq("id", userId)
       .eq("is_complete", true)
@@ -65,19 +72,22 @@ export default function DiscoverPage() {
       const target = candidates[0];
       const supabase = createClient();
 
-      await supabase.from("swipes").upsert({
+      // 5. Correção: "swipes" as any
+      await supabase.from("swipes" as any).upsert({
         swiper_id: myProfile.id,
         swiped_id: target.id,
         direction,
-      });
+      } as any);
 
       setSwipeCount((c) => c + 1);
 
       if (direction === "heaven") {
+        // 6. Correção: "swipes" as any
         const { data: theirSwipe } = await supabase
-          .from("swipes").select("id")
+          .from("swipes" as any).select("id")
           .eq("swiper_id", target.id).eq("swiped_id", myProfile.id)
           .eq("direction", "heaven").single();
+          
         if (theirSwipe) {
           setTimeout(() => setMatchedProfile(target), 300);
         }

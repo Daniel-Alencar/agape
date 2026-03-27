@@ -18,13 +18,15 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
+      // 1. Adicionado 'as any' para calar o never
       const { data } = await supabase
-        .from("profiles")
+        .from("profiles" as any)
         .select("*")
         .eq("id", user.id)
         .single();
 
-      setProfile(data as Profile);
+      // 2. Adicionado 'as unknown' para fazer a ponte do null
+      setProfile(data as unknown as Profile);
       setLoading(false);
     }
     load();
