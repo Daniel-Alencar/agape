@@ -1,0 +1,399 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Nunito:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────
+   CSS Variables — Paleta Celestial
+───────────────────────────────────────────── */
+:root {
+  --gold-300: #FFE97D;
+  --gold-400: #FFD700;
+  --gold-500: #D4AF37;
+  --gold-600: #B8960C;
+
+  --midnight-900: #080D1A;
+  --midnight-800: #0F1629;
+  --midnight-700: #162038;
+
+  --heaven-glow: rgba(253, 211, 77, 0.6);
+  --hell-glow: rgba(220, 38, 38, 0.6);
+
+  --card-bg: rgba(255, 248, 240, 0.97);
+  --glass-bg: rgba(15, 22, 41, 0.7);
+  --glass-border: rgba(212, 175, 55, 0.2);
+}
+
+/* ─────────────────────────────────────────────
+   Base & Resets
+───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* Pages that need scroll use position:absolute + overflow-y:auto on their container */
+}
+
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  background: var(--midnight-900);
+  color: #F8F4EC;
+  -webkit-font-smoothing: antialiased;
+}
+
+#__next { height: 100%; }
+
+/* ─────────────────────────────────────────────
+   Scrollbar customizada
+───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--midnight-800); }
+::-webkit-scrollbar-thumb {
+  background: var(--gold-600);
+  border-radius: 3px;
+}
+
+/* ─────────────────────────────────────────────
+   Stars background
+───────────────────────────────────────────── */
+.stars-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(0.6); }
+}
+
+/* ─────────────────────────────────────────────
+   Glass morphism components
+───────────────────────────────────────────── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ─────────────────────────────────────────────
+   Gold shimmer effect
+───────────────────────────────────────────── */
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--gold-500) 0%,
+    var(--gold-300) 50%,
+    var(--gold-500) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ─────────────────────────────────────────────
+   Swipe Card
+───────────────────────────────────────────── */
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  background: var(--card-bg);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+  touch-action: none;
+  user-select: none;
+  transition: box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.swipe-card.dragging {
+  transition: none;
+  cursor: grabbing;
+}
+
+.swipe-card.heaven-swipe {
+  box-shadow:
+    0 0 0 3px #FFD700,
+    0 0 40px rgba(253, 211, 77, 0.7),
+    0 0 80px rgba(255, 255, 200, 0.3);
+}
+
+.swipe-card.hell-swipe {
+  box-shadow:
+    0 0 0 3px #DC2626,
+    0 0 40px rgba(220, 38, 38, 0.7),
+    0 0 80px rgba(239, 68, 68, 0.3);
+}
+
+/* ─────────────────────────────────────────────
+   Heaven / Hell overlay indicators
+───────────────────────────────────────────── */
+.heaven-indicator {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 215, 0, 0.4), transparent);
+  border-radius: 24px;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.hell-indicator {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(220, 38, 38, 0.4), transparent);
+  border-radius: 24px;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* ─────────────────────────────────────────────
+   Particle effects
+───────────────────────────────────────────── */
+@keyframes floatParticle {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-200px) translateX(var(--drift, 20px)) scale(0); opacity: 0; }
+}
+
+@keyframes sinkParticle {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 1; }
+  100% { transform: translateY(200px) translateX(var(--drift, -20px)) scale(0); opacity: 0; }
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  animation-fill-mode: forwards;
+}
+
+/* ─────────────────────────────────────────────
+   Match animation
+───────────────────────────────────────────── */
+@keyframes matchReveal {
+  0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+  60% { transform: scale(1.1) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.match-reveal {
+  animation: matchReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ─────────────────────────────────────────────
+   Cross decoration
+───────────────────────────────────────────── */
+.cross-decoration::before,
+.cross-decoration::after {
+  content: '';
+  position: absolute;
+  background: currentColor;
+  opacity: 0.15;
+}
+.cross-decoration::before {
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+.cross-decoration::after {
+  height: 2px;
+  width: 100%;
+  top: 30%;
+  left: 0;
+}
+
+/* ─────────────────────────────────────────────
+   Form inputs
+───────────────────────────────────────────── */
+.divine-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  color: #F8F4EC;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.divine-input::placeholder { color: rgba(248, 244, 236, 0.4); }
+
+.divine-input:focus {
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.divine-input option { background: #0F1629; }
+
+/* ─────────────────────────────────────────────
+   Buttons
+───────────────────────────────────────────── */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  background: linear-gradient(135deg, #D4AF37, #FFD700, #D4AF37);
+  background-size: 200% 100%;
+  color: #0A0E1A;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4);
+}
+
+.btn-gold:hover {
+  background-position: right center;
+  box-shadow: 0 6px 30px rgba(212, 175, 55, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-gold:active { transform: translateY(0); }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 28px;
+  background: transparent;
+  color: var(--gold-400);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--gold-400);
+}
+
+/* ─────────────────────────────────────────────
+   Profile photo ring
+───────────────────────────────────────────── */
+.divine-ring {
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.divine-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #FFD700, #FFF, #FFD700);
+  z-index: -1;
+}
+
+/* ─────────────────────────────────────────────
+   Dove icon float
+───────────────────────────────────────────── */
+@keyframes doveFloat {
+  0%, 100% { transform: translateY(0) translateX(0) rotate(-5deg); }
+  25% { transform: translateY(-8px) translateX(5px) rotate(0deg); }
+  50% { transform: translateY(-12px) translateX(0) rotate(5deg); }
+  75% { transform: translateY(-6px) translateX(-5px) rotate(0deg); }
+}
+
+.dove-float { animation: doveFloat 4s ease-in-out infinite; }
+
+/* ─────────────────────────────────────────────
+   Halo ring
+───────────────────────────────────────────── */
+@keyframes haloGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.halo-ring {
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  border-radius: 50%;
+  animation: haloGlow 2s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────
+   Page transitions
+───────────────────────────────────────────── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-in { animation: pageIn 0.4s ease-out forwards; }
+
+/* ─────────────────────────────────────────────
+   Nav bar
+───────────────────────────────────────────── */
+.nav-item-active {
+  color: var(--gold-400) !important;
+  position: relative;
+}
+
+.nav-item-active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--gold-400);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--gold-400);
+}
+
+/* ─────────────────────────────────────────────
+   Loading spinner
+───────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(212, 175, 55, 0.2);
+  border-top-color: var(--gold-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
