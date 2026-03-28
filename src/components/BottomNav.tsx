@@ -24,7 +24,8 @@ export function BottomNav() {
         borderRadius: "20px 20px 0 0",
         padding: "10px 0 env(safe-area-inset-bottom, 10px)",
         display: "flex",
-        justifyContent: "space-around",
+        // Trocamos de space-around para center/flex-start porque o flex: 1 fará a distribuição
+        justifyContent: "space-between", 
         alignItems: "center",
         zIndex: 50,
         borderBottom: "none",
@@ -36,7 +37,12 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            style={{ textDecoration: "none" }}
+            style={{ 
+              textDecoration: "none",
+              flex: 1, // ✨ O SEGREDO ESTÁ AQUI: Força todos a terem a mesma largura (33.3%)
+              display: "flex",
+              justifyContent: "center" // Centraliza o conteúdo dentro da sua fatia de 33%
+            }}
           >
             <div
               style={{
@@ -44,7 +50,7 @@ export function BottomNav() {
                 flexDirection: "column",
                 alignItems: "center",
                 gap: 2,
-                padding: "6px 20px",
+                padding: "6px 0", // Removi o padding horizontal para não estourar caixas pequenas
                 borderRadius: 12,
                 transition: "all 0.2s",
                 position: "relative",

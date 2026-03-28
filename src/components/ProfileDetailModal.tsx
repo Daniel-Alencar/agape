@@ -1,5 +1,6 @@
 "use client";
 import type { Profile } from "@/lib/types";
+import { useState, useRef } from "react";
 
 interface ProfileDetailModalProps {
   profile: Profile;
@@ -8,12 +9,66 @@ interface ProfileDetailModalProps {
 }
 
 export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailModalProps) {
+  // Estados para o drag-to-close
+  const [dragY, setDragY] = useState(0);
+  const isDragging = useRef(false);
+  const startY = useRef(0);
+  const [isClosing, setIsClosing] = useState(false);
+
   const getAge = (birthDate: string) => {
     const dob = new Date(birthDate);
     let age = new Date().getFullYear() - dob.getFullYear();
     if (new Date().getMonth() - dob.getMonth() < 0) age--;
     return age;
   };
+
+  // Funções de manipulação do arraste
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Só inicia o drag se estiver clicando perto do topo (no "drag handle") ou se o scroll estiver no topo
+    const target = e.target as HTMLElement;
+    const scrollContainer = target.closest('.scroll-container');
+    
+    // Se clicou dentro do scroll e ele não está no topo, deixa a rolagem nativa funcionar
+    if (scrollContainer && scrollContainer.scrollTop > 0) return;
+
+    isDragging.current = true;
+    startY.current = e.clientY;
+    // Opcional: e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    
+    const deltaY = e.clientY - startY.current;
+    
+    // Só permite arrastar para baixo
+    if (deltaY > 0) {
+      setDragY(deltaY);
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+
+    // Se arrastou mais de 100px para baixo, fecha o modal
+    if (dragY > 100) {
+      handleClose();
+    } else {
+      // Caso contrário, volta para a posição original
+      setDragY(0);
+    }
+  };
+
+  const handleClose = () => {
+    setIsClosing(true);
+    // Espera a animação terminar antes de chamar o onClose real
+    setTimeout(onClose, 300);
+  };
+
+  // Se estiver fechando (por drag ou botão), anima para fora da tela
+  const translateY = isClosing ? "100%" : `${dragY}px`;
+  const transition = isDragging.current ? "none" : "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)";
 
   return (
     <div
@@ -23,13 +78,18 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
         zIndex: 80,
         display: "flex",
         flexDirection: "column",
-        background: "rgba(0,0,0,0.7)",
-        backdropFilter: "blur(6px)",
+        background: `rgba(0,0,0,${isClosing ? 0 : 0.7 - (dragY / 500)})`, // Esmaece o fundo ao arrastar
+        backdropFilter: `blur(${isClosing ? 0 : Math.max(0, 6 - (dragY / 100))}px)`,
+        transition: "background 0.3s, backdrop-filter 0.3s",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
     >
       {/* Modal panel */}
       <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         style={{
           marginTop: "auto",
           maxHeight: "90vh",
@@ -40,7 +100,10 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          animation: "slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          transform: `translateY(${translateY})`,
+          transition: transition,
+          animation: isClosing ? "none" : "slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          touchAction: "pan-y", // Permite rolagem vertical nativa, mas passamos a controlar se no topo
         }}
       >
         <style>{`
@@ -51,13 +114,13 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
         `}</style>
 
         {/* Drag handle */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 0" }}>
-          <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(212,175,55,0.3)" }} />
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 12px", cursor: "grab" }}>
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(212,175,55,0.4)" }} />
         </div>
 
         {/* Close */}
-        <button
-          onClick={onClose}
+        {/* <button
+          onClick={handleClose}
           style={{
             position: "absolute",
             top: 16,
@@ -73,13 +136,17 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            zIndex: 10,
           }}
         >
           ×
-        </button>
+        </button> */}
 
         {/* Scrollable content */}
-        <div style={{ overflowY: "auto", flex: 1, padding: "16px 20px 24px" }}>
+        <div 
+          className="scroll-container"
+          style={{ overflowY: "auto", flex: 1, padding: "0 20px 24px" }}
+        >
           {/* Photo + name hero */}
           <div
             style={{
@@ -96,12 +163,14 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
               <img
                 src={profile.avatar_url}
                 alt={profile.full_name}
+                draggable={false}
                 style={{
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
                   objectPosition: "center top",
                   display: "block",
+                  pointerEvents: "none"
                 }}
               />
             ) : (
@@ -114,9 +183,10 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
                 position: "absolute",
                 inset: 0,
                 background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%)",
+                pointerEvents: "none"
               }}
             />
-            <div style={{ position: "absolute", bottom: 16, left: 16, right: 16 }}>
+            <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, pointerEvents: "none" }}>
               <h2
                 style={{
                   fontFamily: "'Cormorant Garamond', serif",
@@ -249,10 +319,12 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
             padding: "16px 20px 24px",
             borderTop: "1px solid rgba(212,175,55,0.1)",
             flexShrink: 0,
+            background: "linear-gradient(180deg, rgba(8,13,26,0.9) 0%, #080D1A 100%)",
+            zIndex: 5,
           }}
         >
           <button
-            onClick={() => { onClose(); onSwipe("hell"); }}
+            onClick={() => { handleClose(); setTimeout(() => onSwipe("hell"), 300); }}
             style={{
               flex: 1,
               height: 54,
@@ -274,7 +346,7 @@ export function ProfileDetailModal({ profile, onClose, onSwipe }: ProfileDetailM
             🔥 <span style={{ fontSize: 13 }}>Inferno</span>
           </button>
           <button
-            onClick={() => { onClose(); onSwipe("heaven"); }}
+            onClick={() => { handleClose(); setTimeout(() => onSwipe("heaven"), 300); }}
             style={{
               flex: 2,
               height: 54,

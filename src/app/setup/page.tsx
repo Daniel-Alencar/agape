@@ -183,9 +183,9 @@ export default function SetupPage() {
         {step === 1 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
-              <label style={labelStyle}>Nome completo *</label>
+              <label style={labelStyle}>Nome *</label>
               <input type="text" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                placeholder="Seu nome completo" className="divine-input" />
+                placeholder="Seu nome" className="divine-input" />
             </div>
             <div>
               <label style={labelStyle}>Data de nascimento *</label>

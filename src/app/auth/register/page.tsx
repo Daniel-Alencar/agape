@@ -174,7 +174,7 @@ export default function RegisterPage() {
         <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
             <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "rgba(248,244,236,0.7)", marginBottom: 5 }}>
-              Nome completo
+              Nome
             </label>
             <input
               type="text"

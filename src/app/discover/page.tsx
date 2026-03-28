@@ -23,11 +23,9 @@ export default function DiscoverPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
 
-      // 1. Correção: "profiles" as any
       const { data: profile } = await supabase
         .from("profiles" as any).select("*").eq("id", user.id).single();
 
-      // 2. Correção: (profile as Profile).is_complete
       if (!profile || !(profile as Profile).is_complete) { router.push("/setup"); return; }
       
       setMyProfile(profile as Profile);
@@ -40,13 +38,11 @@ export default function DiscoverPage() {
   async function loadCandidates(userId: string, profile: Profile) {
     const supabase = createClient();
     
-    // 3. Correção: "swipes" as any
     const { data: swiped } = await supabase
       .from("swipes" as any).select("swiped_id").eq("swiper_id", userId);
       
     const swipedIds = swiped?.map((s: { swiped_id: string }) => s.swiped_id) ?? [];
 
-    // 4. Correção: "profiles" as any
     let query = supabase
       .from("profiles" as any)
       .select("*")
@@ -72,7 +68,6 @@ export default function DiscoverPage() {
       const target = candidates[0];
       const supabase = createClient();
 
-      // 5. Correção: "swipes" as any
       await supabase.from("swipes" as any).upsert({
         swiper_id: myProfile.id,
         swiped_id: target.id,
@@ -82,7 +77,6 @@ export default function DiscoverPage() {
       setSwipeCount((c) => c + 1);
 
       if (direction === "heaven") {
-        // 6. Correção: "swipes" as any
         const { data: theirSwipe } = await supabase
           .from("swipes" as any).select("id")
           .eq("swiper_id", target.id).eq("swiped_id", myProfile.id)
@@ -109,11 +103,38 @@ export default function DiscoverPage() {
     );
   }
 
+  // Pegamos no máximo 3 perfis visíveis para a pilha
+  const visibleCandidates = candidates.slice(0, 3);
+
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", paddingBottom: 72, position: "relative", overflow: "hidden" }}>
 
+      {/* 🌟 ATMOSFERA DO CÉU (TOPO) 🌟 */}
+      <div
+        style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: "35vh",
+          background: "linear-gradient(to bottom, rgba(255, 215, 0, 0.12), transparent)",
+          pointerEvents: "none", zIndex: 0,
+          display: "flex", justifyContent: "center", paddingTop: "80px"
+        }}
+      >
+        <span style={{ fontSize: 40, opacity: 0.2, filter: "blur(2px)" }}>✨ 🕊️ ✨</span>
+      </div>
+
+      {/* 🔥 ATMOSFERA DO INFERNO (BASE) 🔥 */}
+      <div
+        style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "40vh",
+          background: "linear-gradient(to top, rgba(220, 38, 38, 0.08), transparent)",
+          pointerEvents: "none", zIndex: 0,
+          display: "flex", justifyContent: "center", alignItems: "flex-end", paddingBottom: "120px"
+        }}
+      >
+        <span style={{ fontSize: 50, opacity: 0.15, filter: "blur(2px)" }}>🔥</span>
+      </div>
+
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px 8px", flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px 8px", flexShrink: 0, zIndex: 10 }}>
         <div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, lineHeight: 1 }} className="gold-shimmer">
             Ágape
@@ -128,34 +149,22 @@ export default function DiscoverPage() {
         </div>
       </div>
 
-      {/* Swipe direction hint */}
-      <div style={{ display: "flex", justifyContent: "center", gap: 24, padding: "0 20px 10px", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(248,244,236,0.45)", fontSize: 11 }}>
-          <span>↑</span>
-          <span style={{ fontWeight: 700, color: "#FFD700", opacity: 0.8 }}>CÉU</span>
-          <span style={{ fontSize: 13 }}>✨</span>
-        </div>
-        <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.1)", alignSelf: "center" }} />
-        <div style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(248,244,236,0.45)", fontSize: 11 }}>
-          <span style={{ fontSize: 13 }}>🔥</span>
-          <span style={{ fontWeight: 700, color: "#DC2626", opacity: 0.8 }}>INFERNO</span>
-          <span>↓</span>
-        </div>
-      </div>
-
       {/* Card Stack */}
-      <div style={{ flex: 1, position: "relative", margin: "0 16px", minHeight: 0 }}>
+      <div style={{ flex: 1, position: "relative", margin: "10px 16px 0", minHeight: 0, zIndex: 10 }}>
         {candidates.length === 0 ? (
           <EmptyState onRefresh={() => { if (myProfile) loadCandidates(myProfile.id, myProfile); }} />
         ) : (
-          candidates.slice(0, 3).reverse().map((profile, reverseIdx) => {
-            const stackIndex = 2 - reverseIdx;
+          visibleCandidates.reverse().map((profile, reverseIdx) => {
+            // Correção da matemática da pilha: agora se baseia no tamanho real de candidatos visíveis
+            const stackIndex = visibleCandidates.length - 1 - reverseIdx;
+            const isTop = stackIndex === 0;
+
             return (
               <SwipeCard
                 key={profile.id}
                 profile={profile}
                 onSwipe={handleSwipe}
-                isTop={stackIndex === 0}
+                isTop={isTop}
                 stackIndex={stackIndex}
                 onShowProfile={setDetailProfile}
               />
@@ -166,7 +175,7 @@ export default function DiscoverPage() {
 
       {/* Action Buttons */}
       {candidates.length > 0 && (
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20, padding: "12px 20px", flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 20, padding: "20px", flexShrink: 0, zIndex: 10 }}>
           {/* Hell */}
           <button
             onClick={() => handleSwipe("hell")}
@@ -243,10 +252,8 @@ function EmptyState({ onRefresh }: { onRefresh: () => void }) {
   return (
     <div
       style={{
-        position: "absolute", inset: 0,
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        gap: 16, textAlign: "center", padding: 24,
+        position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 16, textAlign: "center", padding: 24,
       }}
     >
       <div className="dove-float" style={{ fontSize: 52 }}>🕊️</div>
